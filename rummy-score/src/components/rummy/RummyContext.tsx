@@ -14,6 +14,10 @@ interface RummyContextType {
   setPlayers: (players: Player[]) => void;
   rounds: Round[];
   setRounds: (rounds: Round[]) => void;
+  selectedPlayers: string[];
+  setSelectedPlayers: (players: string[]) => void;
+  allPlayers: string[];
+  setAllPlayers: (players: string[]) => void;
 }
 
 const initialPlayers: Player[] = [
@@ -34,9 +38,32 @@ export function useRummy() {
 export function RummyProvider({ children }: { children: ReactNode }) {
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [rounds, setRounds] = useState<Round[]>([initialPlayers]);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([
+    "Padma",
+    "Babu",
+    "Harsha",
+    "Pragna",
+  ]);
+  const [allPlayers, setAllPlayers] = useState<string[]>([
+    "Padma",
+    "Babu",
+    "Harsha",
+    "Pragna",
+  ]);
 
   return (
-    <RummyContext.Provider value={{ players, setPlayers, rounds, setRounds }}>
+    <RummyContext.Provider
+      value={{
+        players,
+        setPlayers,
+        rounds,
+        setRounds,
+        selectedPlayers,
+        setSelectedPlayers,
+        allPlayers,
+        setAllPlayers,
+      }}
+    >
       {children}
     </RummyContext.Provider>
   );

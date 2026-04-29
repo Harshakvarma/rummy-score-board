@@ -1,86 +1,190 @@
 "use client";
-import { useState } from "react";
-import { Card } from "../ui/card";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useRummy } from "./RummyContext";
+import { ArrowLeft, Plus, Users, Check } from "lucide-react";
 
 export default function PlayerList() {
-  const [players, setPlayers] = useState(["Babu", "Harsha", "Padma", "Pragna"]);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { allPlayers, setAllPlayers, selectedPlayers, setSelectedPlayers } =
+    useRummy();
   const [showDialog, setShowDialog] = useState(false);
   const [newPlayer, setNewPlayer] = useState("");
-  const navigate = useNavigate();
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [localSelected, setLocalSelected] = useState<string[]>(selectedPlayers);
+
+  useEffect(() => {
+    // Check if coming from NewGameForm (select mode)
+    if (location.state?.selectMode) {
+      setIsSelectMode(true);
+    }
+  }, [location.state?.selectMode]);
 
   const handleAddPlayer = () => {
-    if (newPlayer.trim() && !players.includes(newPlayer.trim())) {
-      setPlayers([...players, newPlayer.trim()]);
+    if (newPlayer.trim() && !allPlayers.includes(newPlayer.trim())) {
+      setAllPlayers([...allPlayers, newPlayer.trim()]);
       setNewPlayer("");
       setShowDialog(false);
     }
   };
 
+  const handleRemovePlayer = (player: string) => {
+    setAllPlayers(allPlayers.filter((p) => p !== player));
+    setLocalSelected(localSelected.filter((p) => p !== player));
+  };
+
+  const handleToggleSelect = (player: string) => {
+    setLocalSelected((prev) =>
+      prev.includes(player)
+        ? prev.filter((p) => p !== player)
+        : [...prev, player]
+    );
+  };
+
+  const handleConfirmSelection = () => {
+    if (localSelected.length < 2) {
+      alert("Please select at least 2 players");
+      return;
+    }
+    setSelectedPlayers(localSelected);
+    navigate("/new-game");
+  };
+
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       {/* Header */}
-      <div className="bg-blue-500 text-white text-lg font-bold py-3 px-4 flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white"
-          onClick={() => navigate(-1)}
-        >
-          <span className="material-icons">←</span>
-        </Button>
-        <span>Player List</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white opacity-0 cursor-default"
-        >
-          <span className="material-icons">more_vert</span>
-        </Button>
-      </div>
-      {/* Player List */}
-      <ul className="flex-1 flex flex-col gap-2 p-4">
-        {players.map((name) => (
-          <li key={name}>
-            <div className="flex items-center gap-4 px-4 py-3 bg-neutral-800 rounded-lg shadow text-white">
-              <span className="material-icons text-blue-400">O</span>
-              <span className="text-lg">{name}</span>
+      <header className="bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-white" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Users className="w-6 h-6 text-white" />
+              <h1 className="text-white text-2xl font-bold">
+                {isSelectMode ? "Select Players" : "All Players"}{" "}
+                {isSelectMode && `(${localSelected.length})`}
+              </h1>
             </div>
-          </li>
-        ))}
-      </ul>
+            <div className="w-10"></div>
+          </div>
+        </div>
+      </header>
+
+      {/* Player List */}
+      <main className="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-2xl mx-auto space-y-3">
+          {allPlayers.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <p className="text-slate-400 text-lg">No players added yet</p>
+            </div>
+          ) : (
+            allPlayers.map((name, idx) => {
+              const isSelected = localSelected.includes(name);
+              return (
+                <div
+                  key={name}
+                  onClick={() => isSelectMode && handleToggleSelect(name)}
+                  className={`group flex items-center gap-4 px-4 sm:px-6 py-4 rounded-xl shadow-md transition-all duration-200 border ${
+                    isSelectMode ? "cursor-pointer" : "cursor-default"
+                  } ${
+                    isSelectMode && isSelected
+                      ? "bg-gradient-to-r from-blue-600 to-cyan-600 border-blue-400 shadow-lg shadow-blue-500/50"
+                      : "bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600/50 hover:from-slate-600 hover:to-slate-700 hover:shadow-lg"
+                  }`}
+                >
+                  {isSelectMode && (
+                    <div className="w-6 h-6 rounded border-2 border-white flex items-center justify-center flex-shrink-0">
+                      {isSelected && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                  )}
+                  {!isSelectMode && (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">
+                        {idx + 1}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-white text-lg font-medium flex-1">
+                    {name}
+                  </span>
+                  {!isSelectMode && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemovePlayer(name);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/20 rounded-lg transition-all text-red-400 hover:text-red-300"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </main>
+
       {/* Add Player Button */}
-      <Button
-        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 rounded-full w-14 h-14 flex items-center justify-center shadow-lg"
-        onClick={() => setShowDialog(true)}
-      >
-        <span className="material-icons text-white text-3xl">+</span>
-      </Button>
+      {!isSelectMode && (
+        <button
+          onClick={() => setShowDialog(true)}
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
+        >
+          <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
+        </button>
+      )}
+
+      {/* Done Button (Select Mode) */}
+      {isSelectMode && (
+        <div className="border-t border-slate-700 bg-slate-900/80 backdrop-blur p-4">
+          <div className="max-w-2xl mx-auto">
+            <button
+              onClick={handleConfirmSelection}
+              disabled={localSelected.length < 2}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg transition-all active:scale-95"
+            >
+              Confirm Selection ({localSelected.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add Player Dialog */}
       {showDialog && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-neutral-800 rounded-xl p-6 w-80 flex flex-col gap-4">
-            <Input
-              placeholder="Enter Player Name"
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-slate-700">
+            <h2 className="text-white text-xl sm:text-2xl font-bold mb-6">
+              Add New Player
+            </h2>
+            <input
+              placeholder="Enter player name"
               value={newPlayer}
               onChange={(e) => setNewPlayer(e.target.value)}
-              className="bg-neutral-700 text-white border-none focus:ring-2 focus:ring-blue-400"
+              onKeyPress={(e) => e.key === "Enter" && handleAddPlayer()}
+              className="w-full px-4 py-2 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 placeholder-slate-400 mb-6"
+              autoFocus
             />
-            <div className="flex gap-4 justify-center mt-2">
-              <Button
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6"
+            <div className="flex gap-3">
+              <button
                 onClick={() => setShowDialog(false)}
+                className="flex-1 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition-colors"
               >
-                CANCEL
-              </Button>
-              <Button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6"
+                Cancel
+              </button>
+              <button
                 onClick={handleAddPlayer}
+                disabled={!newPlayer.trim()}
+                className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium transition-all"
               >
-                ADD
-              </Button>
+                Add Player
+              </button>
             </div>
           </div>
         </div>

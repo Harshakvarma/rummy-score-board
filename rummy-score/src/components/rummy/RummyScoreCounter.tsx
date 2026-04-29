@@ -1,9 +1,8 @@
 "use client";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRummy } from "./RummyContext";
-import { Card } from "../ui/card";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { ArrowLeft, Check } from "lucide-react";
 
 type Player = {
   name: string;
@@ -12,10 +11,10 @@ type Player = {
 };
 
 export default function RummyScoreCounter() {
+  const navigate = useNavigate();
   const { players, setPlayers, rounds, setRounds } = useRummy();
   const [showScoreOptions, setShowScoreOptions] = useState(true);
 
-  // Score action handlers
   const handleScoreInput = (playerIdx: number, value: string) => {
     const updated = [...players];
     updated[playerIdx].roundScore = value;
@@ -23,7 +22,6 @@ export default function RummyScoreCounter() {
   };
 
   const handleScoreAction = (playerIdx: number, action: string) => {
-    // Example: set roundScore based on action
     let value = "";
     switch (action) {
       case "Show":
@@ -48,7 +46,6 @@ export default function RummyScoreCounter() {
   };
 
   const handleSubmit = () => {
-    // Add new round with updated scores
     const updatedPlayers = players.map((p) => ({
       ...p,
       score: p.score + (parseInt(p.roundScore) || 0),
@@ -56,123 +53,141 @@ export default function RummyScoreCounter() {
     }));
     setRounds([...rounds, updatedPlayers]);
     setPlayers(updatedPlayers);
+    navigate("/summary");
   };
 
   return (
-    <div className="max-w-md mx-auto py-4">
-      <h1 className="text-xl font-bold text-center mb-2 bg-blue-500 text-white py-2 rounded-t">
-        Add Round Scores
-      </h1>
-      <div className="bg-black/80 p-2 rounded-b">
-        {players.map((player, idx) => (
-          <Card
-            key={player.name}
-            className="bg-neutral-800 border-0 rounded-none mb-2"
-          >
-            <div className="flex flex-col sm:flex-row items-center justify-between p-3 gap-2">
-              <div className="flex-1">
-                <div className="font-bold text-lg text-white">
-                  {player.name}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-white" />
+            </button>
+            <h1 className="text-white text-2xl font-bold">Add Round Scores</h1>
+            <div className="w-10"></div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {/* Players Score Input */}
+          {players.map((player, idx) => (
+            <div
+              key={player.name}
+              className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-6 border border-slate-600/50"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-white font-bold text-lg">{player.name}</h3>
+                  <p className="text-slate-300 text-sm">Score: {player.score}</p>
                 </div>
-                <div className="text-gray-300 text-sm">
-                  Score: {player.score}
-                </div>
-              </div>
-              <div className="flex-1 flex items-center gap-2">
-                <Input
-                  className="bg-neutral-700 text-white border-none focus:ring-2 focus:ring-blue-400"
-                  placeholder="Score"
+                <input
+                  type="number"
+                  placeholder="Enter score"
                   value={player.roundScore}
                   onChange={(e) => handleScoreInput(idx, e.target.value)}
-                  type="number"
+                  className="w-full sm:w-32 px-4 py-2 rounded-lg bg-slate-600 text-white border border-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 placeholder-slate-400"
                 />
               </div>
-            </div>
-            {showScoreOptions && (
-              <div className="flex gap-2 justify-center pb-2">
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => handleScoreAction(idx, "Show")}
-                >
-                  Show
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black"
-                  onClick={() => handleScoreAction(idx, "Drop")}
-                >
-                  Drop
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-yellow-300 hover:bg-yellow-400 text-black"
-                  onClick={() => handleScoreAction(idx, "M Drop")}
-                >
-                  M Drop
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-indigo-400 hover:bg-indigo-500 text-white"
-                  onClick={() => handleScoreAction(idx, "Full")}
-                >
-                  Full
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  onClick={() => handleScoreAction(idx, "Out")}
-                >
-                  Out
-                </Button>
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
-      <div className="bg-black/90 p-4 rounded-b-xl mt-2">
-        <label className="flex items-center gap-2 mb-4 text-white">
-          <input
-            type="checkbox"
-            checked={showScoreOptions}
-            onChange={() => setShowScoreOptions((v) => !v)}
-            className="accent-blue-500 w-4 h-4"
-          />
-          Show Score Options?
-        </label>
-        <Button
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white text-lg py-2"
-          onClick={handleSubmit}
-        >
-          SUBMIT
-        </Button>
-      </div>
-      <div className="mt-4">
-        {rounds.length > 1 && (
-          <>
-            <h2 className="text-center text-white text-base mb-2">
-              Game Rounds
-            </h2>
-            {rounds.map((round, i) =>
-              i === 0 ? null : (
-                <div key={i} className="bg-neutral-900 rounded mb-2 p-2">
-                  <div className="text-xs text-gray-400 mb-1">Round {i}</div>
-                  <div className="flex flex-wrap gap-2">
-                    {round.map((p) => (
-                      <div
-                        key={p.name}
-                        className="text-white text-xs bg-neutral-700 rounded px-2 py-1"
-                      >
-                        {p.name}: +{p.roundScore || 0}
-                      </div>
-                    ))}
-                  </div>
+
+              {/* Score Buttons */}
+              {showScoreOptions && (
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                  <button
+                    onClick={() => handleScoreAction(idx, "Show")}
+                    className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
+                  >
+                    Show
+                  </button>
+                  <button
+                    onClick={() => handleScoreAction(idx, "Drop")}
+                    className="px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-black text-sm font-medium transition-colors"
+                  >
+                    Drop
+                  </button>
+                  <button
+                    onClick={() => handleScoreAction(idx, "M Drop")}
+                    className="px-3 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-black text-sm font-medium transition-colors"
+                  >
+                    M Drop
+                  </button>
+                  <button
+                    onClick={() => handleScoreAction(idx, "Full")}
+                    className="px-3 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors"
+                  >
+                    Full
+                  </button>
+                  <button
+                    onClick={() => handleScoreAction(idx, "Out")}
+                    className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
+                  >
+                    Out
+                  </button>
                 </div>
-              )
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </div>
+          ))}
+
+          {/* Options & Submit */}
+          <div className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-6 border border-slate-600/50">
+            <label className="flex items-center gap-3 mb-6 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showScoreOptions}
+                onChange={() => setShowScoreOptions((v) => !v)}
+                className="w-5 h-5 rounded accent-blue-500 cursor-pointer"
+              />
+              <span className="text-white font-medium">Show Score Options?</span>
+            </label>
+
+            <button
+              onClick={handleSubmit}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-lg transition-all active:scale-95 shadow-lg hover:shadow-xl"
+            >
+              <Check className="w-5 h-5" />
+              Submit Scores
+            </button>
+          </div>
+
+          {/* Game Rounds History */}
+          {rounds.length > 1 && (
+            <div className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-6 border border-slate-600/50">
+              <h2 className="text-white font-bold text-lg mb-4">Game Rounds</h2>
+              <div className="space-y-3">
+                {rounds.map((round, i) =>
+                  i === 0 ? null : (
+                    <div
+                      key={i}
+                      className="bg-slate-600/50 rounded-lg p-4 border border-slate-600/50"
+                    >
+                      <div className="text-sm text-slate-400 mb-2 font-semibold">
+                        Round {i}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {round.map((p) => (
+                          <div
+                            key={p.name}
+                            className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm font-medium border border-blue-500/50"
+                          >
+                            {p.name}: +{p.roundScore || 0}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
