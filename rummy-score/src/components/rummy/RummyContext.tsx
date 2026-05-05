@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 export type Player = {
   name: string;
@@ -20,12 +20,9 @@ interface RummyContextType {
   setAllPlayers: (players: string[]) => void;
 }
 
-const initialPlayers: Player[] = [
-  { name: "Padma", score: 35, roundScore: "" },
-  { name: "Babu", score: 67, roundScore: "" },
-  { name: "Harsha", score: 58, roundScore: "" },
-  { name: "Pragna", score: 0, roundScore: "" },
-];
+const initialPlayers: Player[] = [];
+
+const STORAGE_KEY = "rummy_game_data";
 
 const RummyContext = createContext<RummyContextType | undefined>(undefined);
 
@@ -38,18 +35,45 @@ export function useRummy() {
 export function RummyProvider({ children }: { children: ReactNode }) {
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [rounds, setRounds] = useState<Round[]>([initialPlayers]);
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([
-    "Padma",
-    "Babu",
-    "Harsha",
-    "Pragna",
-  ]);
-  const [allPlayers, setAllPlayers] = useState<string[]>([
-    "Padma",
-    "Babu",
-    "Harsha",
-    "Pragna",
-  ]);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [allPlayers, setAllPlayers] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          setSelectedPlayers(data.selectedPlayers || []);
+          setAllPlayers(data.allPlayers || []);
+          setPlayers(data.players || initialPlayers);
+          setRounds(data.rounds || [initialPlayers]);
+        }
+      } catch (error) {
+        console.error("Failed to load from localStorage:", error);
+      }
+    }
+  }, []);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    if (isClient && typeof window !== "undefined") {
+      try {
+        const data = {
+          selectedPlayers,
+          allPlayers,
+          players,
+          rounds,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (error) {
+        console.error("Failed to save to localStorage:", error);
+      }
+    }
+  }, [selectedPlayers, allPlayers, players, rounds, isClient]);
 
   return (
     <RummyContext.Provider

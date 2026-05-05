@@ -1,24 +1,29 @@
 "use client";
-import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 
-const RouterComponent = dynamic(() => import("../components/RouterComponent"), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-black flex items-center justify-center text-white">
-      Loading...
-    </div>
-  ),
-});
+import RummyHome from "@/components/rummy/RummyHome";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return <RouterComponent />;
+  return (
+    <RummyHome
+      onNavigate={(page) => {
+        switch (page) {
+          case "addPlayers":
+            router.push("/players");
+            break;
+          case "newGame":
+            router.push("/new-game");
+            break;
+          case "addScore":
+            router.push("/add-score");
+            break;
+          case "continueGame":
+            router.push("/summary");
+            break;
+        }
+      }}
+    />
+  );
 }

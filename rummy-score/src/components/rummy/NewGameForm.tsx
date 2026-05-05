@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useRummy } from "./RummyContext";
 import { ArrowLeft, Plus, X } from "lucide-react";
 
 const NewGameForm: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { selectedPlayers, setSelectedPlayers } = useRummy();
   const [gameName, setGameName] = useState("Game 1");
   const [gameTotal, setGameTotal] = useState("200");
@@ -19,7 +19,8 @@ const NewGameForm: React.FC = () => {
   };
 
   const handleSelectPlayers = () => {
-    navigate("/players", { state: { selectMode: true } });
+    // Navigate to players page with select mode query parameter
+    router.push("/players?mode=select");
   };
 
   const handleStartGame = () => {
@@ -28,7 +29,7 @@ const NewGameForm: React.FC = () => {
       return;
     }
     // TODO: Navigate to score counter with game settings
-    navigate("/add-score");
+    router.push("/add-score");
   };
 
   return (
@@ -38,7 +39,7 @@ const NewGameForm: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
               className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-white" />

@@ -1,25 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useRummy } from "./RummyContext";
 import { ArrowLeft, Plus, Users, Check } from "lucide-react";
 
 export default function PlayerList() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
   const { allPlayers, setAllPlayers, selectedPlayers, setSelectedPlayers } =
     useRummy();
   const [showDialog, setShowDialog] = useState(false);
   const [newPlayer, setNewPlayer] = useState("");
   const [isSelectMode, setIsSelectMode] = useState(false);
-  const [localSelected, setLocalSelected] = useState<string[]>(selectedPlayers);
-
-  useEffect(() => {
-    // Check if coming from NewGameForm (select mode)
-    if (location.state?.selectMode) {
-      setIsSelectMode(true);
-    }
-  }, [location.state?.selectMode]);
 
   const handleAddPlayer = () => {
     if (newPlayer.trim() && !allPlayers.includes(newPlayer.trim())) {
@@ -31,24 +22,23 @@ export default function PlayerList() {
 
   const handleRemovePlayer = (player: string) => {
     setAllPlayers(allPlayers.filter((p) => p !== player));
-    setLocalSelected(localSelected.filter((p) => p !== player));
+    setSelectedPlayers(selectedPlayers.filter((p) => p !== player));
   };
 
   const handleToggleSelect = (player: string) => {
-    setLocalSelected((prev) =>
-      prev.includes(player)
-        ? prev.filter((p) => p !== player)
-        : [...prev, player]
+    setSelectedPlayers(
+      selectedPlayers.includes(player)
+        ? selectedPlayers.filter((p) => p !== player)
+        : [...selectedPlayers, player],
     );
   };
 
   const handleConfirmSelection = () => {
-    if (localSelected.length < 2) {
+    if (selectedPlayers.length < 2) {
       alert("Please select at least 2 players");
       return;
     }
-    setSelectedPlayers(localSelected);
-    navigate("/new-game");
+    router.push("/new-game");
   };
 
   return (
@@ -58,7 +48,7 @@ export default function PlayerList() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
               className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-white" />
@@ -67,7 +57,7 @@ export default function PlayerList() {
               <Users className="w-6 h-6 text-white" />
               <h1 className="text-white text-2xl font-bold">
                 {isSelectMode ? "Select Players" : "All Players"}{" "}
-                {isSelectMode && `(${localSelected.length})`}
+                {isSelectMode && `(${selectedPlayers.length})`}
               </h1>
             </div>
             <div className="w-10"></div>
@@ -85,7 +75,7 @@ export default function PlayerList() {
             </div>
           ) : (
             allPlayers.map((name, idx) => {
-              const isSelected = localSelected.includes(name);
+              const isSelected = selectedPlayers.includes(name);
               return (
                 <div
                   key={name}
@@ -119,9 +109,9 @@ export default function PlayerList() {
                         e.stopPropagation();
                         handleRemovePlayer(name);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/20 rounded-lg transition-all text-red-400 hover:text-red-300"
+                      className="p-2 rounded-lg transition-all text-red-400"
                     >
-                      ✕
+                      &#xe020;
                     </button>
                   )}
                 </div>
@@ -129,32 +119,29 @@ export default function PlayerList() {
             })
           )}
         </div>
-      </main>
-
-      {/* Add Player Button */}
-      {!isSelectMode && (
+        {/* Add Player Button */}
         <button
           onClick={() => setShowDialog(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
+          className="p-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
         >
           <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
         </button>
-      )}
+      </main>
 
       {/* Done Button (Select Mode) */}
-      {isSelectMode && (
+      {/* {isSelectMode && ( */}
         <div className="border-t border-slate-700 bg-slate-900/80 backdrop-blur p-4">
           <div className="max-w-2xl mx-auto">
             <button
               onClick={handleConfirmSelection}
-              disabled={localSelected.length < 2}
+              disabled={selectedPlayers.length < 2}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg transition-all active:scale-95"
             >
-              Confirm Selection ({localSelected.length})
+              Confirm Selection ({selectedPlayers.length})
             </button>
           </div>
         </div>
-      )}
+      {/* )} */}
 
       {/* Add Player Dialog */}
       {showDialog && (

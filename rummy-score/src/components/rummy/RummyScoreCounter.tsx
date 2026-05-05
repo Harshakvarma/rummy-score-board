@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useRummy } from "./RummyContext";
 import { ArrowLeft, Check } from "lucide-react";
 
@@ -11,17 +11,24 @@ type Player = {
 };
 
 export default function RummyScoreCounter() {
-  const navigate = useNavigate();
-  const { players, setPlayers, rounds, setRounds } = useRummy();
+  const router = useRouter();
+  const { players, setPlayers, rounds, setRounds, selectedPlayers } =
+    useRummy();
   const [showScoreOptions, setShowScoreOptions] = useState(true);
 
-  const handleScoreInput = (playerIdx: number, value: string) => {
-    const updated = [...players];
-    updated[playerIdx].roundScore = value;
+  // Get only selected players for this game
+  const gamePlayersArray = selectedPlayers
+    .map((name) => players.find((p) => p.name === name))
+    .filter((p) => p !== undefined) as Player[];
+
+  const handleScoreInput = (playerName: string, value: string) => {
+    const updated = players.map((p) =>
+      p.name === playerName ? { ...p, roundScore: value } : p
+    );
     setPlayers(updated);
   };
 
-  const handleScoreAction = (playerIdx: number, action: string) => {
+  const handleScoreAction = (playerName: string, action: string) => {
     let value = "";
     switch (action) {
       case "Show":
@@ -42,7 +49,7 @@ export default function RummyScoreCounter() {
       default:
         value = "";
     }
-    handleScoreInput(playerIdx, value);
+    handleScoreInput(playerName, value);
   };
 
   const handleSubmit = () => {
@@ -53,7 +60,7 @@ export default function RummyScoreCounter() {
     }));
     setRounds([...rounds, updatedPlayers]);
     setPlayers(updatedPlayers);
-    navigate("/summary");
+    router.push("/summary");
   };
 
   return (
@@ -63,12 +70,12 @@ export default function RummyScoreCounter() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => router.back()}
               className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-white" />
             </button>
-            <h1 className="text-white text-2xl font-bold">Add Round Scores</h1>
+            <h1 className="text-white text-2xl font-bold">Add Scores</h1>
             <div className="w-10"></div>
           </div>
         </div>
@@ -78,7 +85,7 @@ export default function RummyScoreCounter() {
       <main className="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="max-w-2xl mx-auto space-y-4">
           {/* Players Score Input */}
-          {players.map((player, idx) => (
+          {gamePlayersArray.map((player) => (
             <div
               key={player.name}
               className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-6 border border-slate-600/50"
@@ -92,7 +99,9 @@ export default function RummyScoreCounter() {
                   type="number"
                   placeholder="Enter score"
                   value={player.roundScore}
-                  onChange={(e) => handleScoreInput(idx, e.target.value)}
+                  onChange={(e) =>
+                    handleScoreInput(player.name, e.target.value)
+                  }
                   className="w-full sm:w-32 px-4 py-2 rounded-lg bg-slate-600 text-white border border-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 placeholder-slate-400"
                 />
               </div>
@@ -101,31 +110,31 @@ export default function RummyScoreCounter() {
               {showScoreOptions && (
                 <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                   <button
-                    onClick={() => handleScoreAction(idx, "Show")}
+                    onClick={() => handleScoreAction(player.name, "Show")}
                     className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
                   >
                     Show
                   </button>
                   <button
-                    onClick={() => handleScoreAction(idx, "Drop")}
+                    onClick={() => handleScoreAction(player.name, "Drop")}
                     className="px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-black text-sm font-medium transition-colors"
                   >
                     Drop
                   </button>
                   <button
-                    onClick={() => handleScoreAction(idx, "M Drop")}
+                    onClick={() => handleScoreAction(player.name, "M Drop")}
                     className="px-3 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-black text-sm font-medium transition-colors"
                   >
                     M Drop
                   </button>
                   <button
-                    onClick={() => handleScoreAction(idx, "Full")}
+                    onClick={() => handleScoreAction(player.name, "Full")}
                     className="px-3 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors"
                   >
                     Full
                   </button>
                   <button
-                    onClick={() => handleScoreAction(idx, "Out")}
+                    onClick={() => handleScoreAction(player.name, "Out")}
                     className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
                   >
                     Out
@@ -155,37 +164,6 @@ export default function RummyScoreCounter() {
               Submit Scores
             </button>
           </div>
-
-          {/* Game Rounds History */}
-          {rounds.length > 1 && (
-            <div className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-6 border border-slate-600/50">
-              <h2 className="text-white font-bold text-lg mb-4">Game Rounds</h2>
-              <div className="space-y-3">
-                {rounds.map((round, i) =>
-                  i === 0 ? null : (
-                    <div
-                      key={i}
-                      className="bg-slate-600/50 rounded-lg p-4 border border-slate-600/50"
-                    >
-                      <div className="text-sm text-slate-400 mb-2 font-semibold">
-                        Round {i}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {round.map((p) => (
-                          <div
-                            key={p.name}
-                            className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm font-medium border border-blue-500/50"
-                          >
-                            {p.name}: +{p.roundScore || 0}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>
