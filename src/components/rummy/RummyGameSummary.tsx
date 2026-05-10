@@ -3,36 +3,28 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Edit2, Plus } from "lucide-react";
 import { useRummy } from "./RummyContext";
 
-interface GamePlayer {
-  name: string;
-  isDealer?: boolean;
-  isWinner?: boolean;
-  roundCode?: string;
-  roundScore?: number | string;
-  totalScore: number;
-}
-
-interface RummyGameSummaryProps {
-  date: string;
-  players: GamePlayer[];
-  rounds: Array<{ code: string; score: number | string }[]>;
-}
-
 export default function RummyGameSummary({
   date = "Aug 14, 2025 - 09:31 pm",
-  players: initialPlayers,
-  rounds = [],
-}: Partial<RummyGameSummaryProps> = {}) {
+}: { date?: string } = {}) {
   const router = useRouter();
-  const { selectedPlayers, players: contextPlayers } = useRummy();
+  const { allPlayers, rounds } = useRummy();
 
-  // Use selected players from context or fallback to initial players
-  const playersList = initialPlayers || (selectedPlayers.length > 0
-    ? selectedPlayers.map((name) => ({
-        name,
-        totalScore: contextPlayers.find((p) => p.name === name)?.score || 0,
-      }))
-    : []);
+  const calculateTotalScore = (playerName: string): number => {
+    return rounds.reduce((total, round) => {
+      return total + (round[playerName] || 0);
+    }, 0);
+  };
+
+  const handleEditScore = () => {
+    if (rounds.length > 0) {
+      const lastRound = rounds[rounds.length - 1];
+      localStorage.setItem("rummy_edit_round", JSON.stringify({
+        round: lastRound,
+        roundIndex: rounds.length - 1
+      }));
+    }
+    router.push("/add-score");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
@@ -53,7 +45,7 @@ export default function RummyGameSummary({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 flex flex-col overflow-auto sm:px-6 lg:px-8 py-6">
         <div className="flex-1 overflow-auto">
           <div className="max-w-4xl mx-auto">
             {/* Date */}
@@ -65,58 +57,44 @@ export default function RummyGameSummary({
             <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 mb-6">
               <div className="px-4 sm:px-6 lg:px-8">
                 <div className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl overflow-hidden border border-slate-600/50 shadow-lg min-w-max">
-                  {/* Player Headers */}
-                  <div className="grid gap-0 bg-gradient-to-r from-blue-600 to-cyan-600" style={{ gridTemplateColumns: `repeat(${playersList.length}, minmax(120px, 1fr))` }}>
-                    {playersList.map((p) => (
+                  {/* Player Headers and Scores */}
+                  <div className="grid gap-0 bg-gradient-to-r from-blue-600 to-cyan-600" style={{ gridTemplateColumns: `repeat(${allPlayers.length}, minmax(150px, 1fr))` }}>
+                    {allPlayers.map((playerName) => (
                       <div
-                        key={p.name}
-                        className={`text-white text-center py-3 font-bold border-r border-slate-700/50 last:border-r-0 px-2 ${
-                          p.isDealer ? "bg-yellow-500/20 border-2 border-yellow-400" : ""
-                        }`}
+                        key={playerName}
+                        className="text-white text-center py-3 border-r border-slate-700/50 last:border-r-0 px-2"
                       >
-                        <div className="text-xs sm:text-sm lg:text-base break-words">
-                          {p.isDealer ? "★ " : ""}{p.name}
-                        </div>
+                        <div className="text-xs sm:text-sm lg:text-base break-words font-bold">{playerName}</div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Round Codes */}
-                  {rounds.map((round, roundIdx) => (
-                    <div key={`codes-${roundIdx}`} className="grid gap-0 border-t border-slate-600/50" style={{ gridTemplateColumns: `repeat(${round.length}, minmax(120px, 1fr))` }}>
-                      {round.map((r, i) => (
-                        <div
-                          key={i}
-                          className="text-center py-3 font-bold text-yellow-300 bg-slate-700 border-r border-slate-600/50 last:border-r-0 px-2"
-                        >
-                          <span className="text-xs sm:text-sm lg:text-base">{r.code}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-
                   {/* Round Scores */}
                   {rounds.map((round, roundIdx) => (
-                    <div key={`scores-${roundIdx}`} className="grid gap-0 border-t border-slate-600/50" style={{ gridTemplateColumns: `repeat(${round.length}, minmax(120px, 1fr))` }}>
-                      {round.map((r, i) => (
+                    <div
+                      key={`round-${roundIdx}`}
+                      className="grid gap-0 border-t border-slate-600/50 bg-slate-800"
+                      style={{ gridTemplateColumns: `repeat(${allPlayers.length}, minmax(150px, 1fr))` }}
+                    >
+                      {allPlayers.map((playerName) => (
                         <div
-                          key={i}
-                          className="text-center py-3 font-bold text-white bg-slate-800 border-r border-slate-600/50 last:border-r-0 px-2"
+                          key={`round-${roundIdx}-${playerName}`}
+                          className="text-center py-2 text-white bg-slate-800 border-r border-slate-600/50 last:border-r-0 px-2"
                         >
-                          <span className="text-xs sm:text-sm lg:text-base">{r.score}</span>
+                          <span className="text-xs sm:text-sm">{round[playerName] || 0}</span>
                         </div>
                       ))}
                     </div>
                   ))}
 
-                  {/* Total Scores */}
-                  <div className="grid gap-0 border-t border-slate-600/50 bg-gradient-to-r from-cyan-600/20 to-blue-600/20" style={{ gridTemplateColumns: `repeat(${playersList.length}, minmax(120px, 1fr))` }}>
-                    {playersList.map((p) => (
+                  {/* Total Scores Row */}
+                  <div className="grid gap-0 border-t border-slate-600/50 bg-gradient-to-r from-cyan-600/20 to-blue-600/20" style={{ gridTemplateColumns: `repeat(${allPlayers.length}, minmax(150px, 1fr))` }}>
+                    {allPlayers.map((playerName) => (
                       <div
-                        key={`total-${p.name}`}
+                        key={`total-${playerName}`}
                         className="text-center py-4 font-bold text-white bg-slate-700 border-r border-slate-600/50 last:border-r-0 px-2"
                       >
-                        <span className="text-sm sm:text-base lg:text-lg">{p.totalScore}</span>
+                        <span className="text-sm sm:text-base lg:text-lg">{calculateTotalScore(playerName)}</span>
                       </div>
                     ))}
                   </div>
@@ -127,7 +105,7 @@ export default function RummyGameSummary({
         </div>
 
         {/* Action Buttons - Sticky Bottom */}
-        <div className="max-w-4xl mx-auto w-full">
+        <div className="max-w-4xl px-4 mx-auto w-full">
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => router.push("/add-score")}
@@ -137,9 +115,7 @@ export default function RummyGameSummary({
               Enter Score
             </button>
             <button
-              onClick={() => {
-                /* TODO: Edit score functionality */
-              }}
+              onClick={handleEditScore}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold text-lg transition-all active:scale-95 shadow-lg hover:shadow-xl"
             >
               <Edit2 className="w-5 h-5" />

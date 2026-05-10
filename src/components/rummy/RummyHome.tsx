@@ -6,7 +6,7 @@ export default function RummyHome({
   onNavigate,
 }: {
   onNavigate: (
-    page: "newGame" | "continueGame" | "addScore",
+    page: "newGame" | "continueGame" | "addScore" | "addPlayers",
   ) => void;
 }) {
   return (

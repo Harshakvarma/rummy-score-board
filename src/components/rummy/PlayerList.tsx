@@ -6,11 +6,10 @@ import { ArrowLeft, Plus, Users, Check } from "lucide-react";
 
 export default function PlayerList() {
   const router = useRouter();
-  const { allPlayers, setAllPlayers, selectedPlayers, setSelectedPlayers } =
-    useRummy();
+  const { allPlayers, setAllPlayers } = useRummy();
   const [showDialog, setShowDialog] = useState(false);
   const [newPlayer, setNewPlayer] = useState("");
-  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
 
   const handleAddPlayer = () => {
     if (newPlayer.trim() && !allPlayers.includes(newPlayer.trim())) {
@@ -33,13 +32,19 @@ export default function PlayerList() {
     );
   };
 
-  const handleConfirmSelection = () => {
-    if (selectedPlayers.length < 2) {
-      alert("Please select at least 2 players");
-      return;
-    }
-    router.push("/new-game");
-  };
+const handleConfirmSelection = () => {
+     if (selectedPlayers.length < 2) {
+       alert("Please select at least 2 players");
+       return;
+     }
+     // Save game players to localStorage
+     const gamePlayers = selectedPlayers.map((name) => ({
+       name,
+       score: 0,
+     }));
+     localStorage.setItem("rummy_game_players", JSON.stringify(gamePlayers));
+     router.push("/new-game");
+   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
@@ -56,8 +61,7 @@ export default function PlayerList() {
             <div className="flex items-center gap-2">
               <Users className="w-6 h-6 text-white" />
               <h1 className="text-white text-2xl font-bold">
-                {isSelectMode ? "Select Players" : "All Players"}{" "}
-                {isSelectMode && `(${selectedPlayers.length})`}
+                Select Players ({selectedPlayers.length})
               </h1>
             </div>
             <div className="w-10"></div>
@@ -79,41 +83,19 @@ export default function PlayerList() {
               return (
                 <div
                   key={name}
-                  onClick={() => isSelectMode && handleToggleSelect(name)}
-                  className={`group flex items-center gap-4 px-4 sm:px-6 py-4 rounded-xl shadow-md transition-all duration-200 border ${
-                    isSelectMode ? "cursor-pointer" : "cursor-default"
-                  } ${
-                    isSelectMode && isSelected
+                  onClick={() => handleToggleSelect(name)}
+                  className={`group flex items-center gap-4 px-4 sm:px-6 py-4 rounded-xl shadow-md transition-all duration-200 border cursor-pointer ${
+                    isSelected
                       ? "bg-gradient-to-r from-blue-600 to-cyan-600 border-blue-400 shadow-lg shadow-blue-500/50"
                       : "bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600/50 hover:from-slate-600 hover:to-slate-700 hover:shadow-lg"
                   }`}
                 >
-                  {isSelectMode && (
-                    <div className="w-6 h-6 rounded border-2 border-white flex items-center justify-center flex-shrink-0">
-                      {isSelected && <Check className="w-4 h-4 text-white" />}
-                    </div>
-                  )}
-                  {!isSelectMode && (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-sm">
-                        {idx + 1}
-                      </span>
-                    </div>
-                  )}
+                  <div className="w-6 h-6 rounded border-2 border-white flex items-center justify-center flex-shrink-0">
+                    {isSelected && <Check className="w-4 h-4 text-white" />}
+                  </div>
                   <span className="text-white text-lg font-medium flex-1">
                     {name}
                   </span>
-                  {!isSelectMode && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemovePlayer(name);
-                      }}
-                      className="p-2 rounded-lg transition-all text-red-400"
-                    >
-                      &#xe020;
-                    </button>
-                  )}
                 </div>
               );
             })
@@ -128,20 +110,18 @@ export default function PlayerList() {
         </button>
       </main>
 
-      {/* Done Button (Select Mode) */}
-      {/* {isSelectMode && ( */}
-        <div className="border-t border-slate-700 bg-slate-900/80 backdrop-blur p-4">
-          <div className="max-w-2xl mx-auto">
-            <button
-              onClick={handleConfirmSelection}
-              disabled={selectedPlayers.length < 2}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg transition-all active:scale-95"
-            >
-              Confirm Selection ({selectedPlayers.length})
-            </button>
-          </div>
+      {/* Done Button */}
+      <div className="border-t border-slate-700 bg-slate-900/80 backdrop-blur p-4">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={handleConfirmSelection}
+            disabled={selectedPlayers.length < 2}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg transition-all active:scale-95"
+          >
+            Confirm Selection ({selectedPlayers.length})
+          </button>
         </div>
-      {/* )} */}
+      </div>
 
       {/* Add Player Dialog */}
       {showDialog && (

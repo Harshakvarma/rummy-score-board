@@ -1,26 +1,35 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRummy } from "./RummyContext";
 import { ArrowLeft, Plus, X } from "lucide-react";
 
 const NewGameForm: React.FC = () => {
   const router = useRouter();
-  const { selectedPlayers, setSelectedPlayers } = useRummy();
+  const { allPlayers, setAllPlayers } = useRummy();
   const [gameName, setGameName] = useState("Game 1");
   const [gameTotal, setGameTotal] = useState("200");
   const [openDrop, setOpenDrop] = useState("25");
   const [middleDrop, setMiddleDrop] = useState("50");
   const [fullCount, setFullCount] = useState("80");
   const [reentry, setReentry] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
 
-  const handleRemovePlayer = (player: string) => {
-    setSelectedPlayers(selectedPlayers.filter((p) => p !== player));
+  useEffect(() => {
+    const saved = localStorage.getItem("rummy_game_players");
+    if (saved) {
+      const players: Array<{ name: string; score: number }> = JSON.parse(saved);
+      setSelectedPlayers(players.map((p) => p.name));
+    }
+  }, []);
+
+  const handleRemovePlayer = (playerName: string) => {
+    setAllPlayers(allPlayers.filter((p) => p !== playerName));
   };
 
   const handleSelectPlayers = () => {
-    // Navigate to players page with select mode query parameter
-    router.push("/players?mode=select");
+    // Navigate to players page
+    router.push("/players");
   };
 
   const handleStartGame = () => {
@@ -28,7 +37,6 @@ const NewGameForm: React.FC = () => {
       alert("Please select at least 2 players");
       return;
     }
-    // TODO: Navigate to score counter with game settings
     router.push("/add-score");
   };
 
@@ -149,14 +157,14 @@ const NewGameForm: React.FC = () => {
               {selectedPlayers.length === 0 ? (
                 <p className="text-slate-400">No players selected</p>
               ) : (
-                selectedPlayers.map((player) => (
+                selectedPlayers.map((playerName) => (
                   <div
-                    key={player}
+                    key={playerName}
                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
                   >
-                    <span className="font-medium">{player}</span>
+                    <span className="font-medium">{playerName}</span>
                     <button
-                      onClick={() => handleRemovePlayer(player)}
+                      onClick={() => handleRemovePlayer(playerName)}
                       className="hover:bg-white/20 rounded-full p-1 transition-colors"
                     >
                       <X className="w-4 h-4" />
