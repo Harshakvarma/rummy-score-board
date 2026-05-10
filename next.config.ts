@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  basePath: "/rummy-score-board",
+  output: "export",
+};
 
 export default withPWA({
   dest: "public",

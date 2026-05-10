@@ -33,16 +33,8 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Export static site
-        run: |
-          mkdir -p ./out
-          # Copy public folder to out
-          cp -r ./public/* ./out/ 2>/dev/null || true
-          # Copy .next/static if it exists
-          if [ -d "./.next/static" ]; then
-            mkdir -p ./out/_next
-            cp -r ./.next/static ./out/_next/
-          fi
+      - name: Create .nojekyll file
+        run: touch out/.nojekyll
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
